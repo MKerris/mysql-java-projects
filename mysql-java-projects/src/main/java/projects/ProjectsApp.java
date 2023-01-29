@@ -8,24 +8,17 @@ import projects.service.ProjectService;
 
 public class ProjectsApp {
 
-	// @formatter: off
-	private List<String> operations = List.of(
-			"1) Add a project"
-			);
-	
-	// @formatter: on
-
 	private Scanner scanner = new Scanner(System.in);
 	private ProjectService projectService = new ProjectService();
-	
-	
-	public static void main(String[] args) {
+	private Project curProject;										// Variable to track currently selected project
 
-		new ProjectsApp().processUserSelections();
-		
-		
-	}
-
+	// @formatter: off
+	private List<String> operations = List.of(						// List of options for the user
+			"1) Add a project",										// Add new project
+			"2) List projects",										// Displays all projects currently in table projects
+			"3) Select a project"									// Allows user to select existing project to access details of project
+			);
+	// @formatter: on
 
 	
 	// Accepts user menu selection. Ends program if null. Keeps program running on valid selections or informs user of invalid selection.
@@ -43,15 +36,21 @@ public class ProjectsApp {
 						done = exitMenu();
 						break;
 				
-					case 1:											// User enters 1
+					case 1:											// User enters 1 - Enter details for a new project
 						createProject();
+						break;
+						
+					case 2:											// User enters 2 - Will list all projects in projects table
+						listProjects();
+						break;
+						
+					case 3:											// User enters 3 - Will allow a user to select an existing project using the project_id
+						selectProject();
 						break;
 						
 					default:										// User makes an invalid selection
 						System.out.println("\n" + selection + " is not a valid selection. Try again.");
-					
 				}
-					
 				
 			} catch (Exception e) {
 				System.out.println("\nError: " + e + " Try again.");
@@ -59,6 +58,7 @@ public class ProjectsApp {
 		}
 		
 	}
+
 
 
 	// Displays menu and asks user to select an item from the menu or no selection to end
@@ -72,11 +72,17 @@ public class ProjectsApp {
 	}
 
 
-	// Prints each item from List operations
+	// Prints each item from List operations and displays project currently selected by user
 	private void printOperations() {
 	
 		System.out.println("\nThese are the available selections. Press the Enter key to quit:");
 		operations.forEach(line -> System.out.println("   " + line));
+		
+		if(Objects.isNull(curProject)) {
+			System.out.println("\nYou are not working with a project.");
+		} else {
+			System.out.println("\nYou are working with project: " + curProject);
+		}
 		
 	}
 
@@ -127,33 +133,69 @@ public class ProjectsApp {
 	}
 
 
+	// Ends program
 	private boolean exitMenu() {
 		System.out.println("Exiting...");
 		return true;
 	}
 
 
+	// Asks user to provide details to populate a project and adds values to the project table
 	private void createProject() {
 		
-		String projectName = getStringInput("Enter the project name");
-		BigDecimal estimatedHours = getDecimalInput("Enter the estimated hours");
-		BigDecimal actualHours = getDecimalInput("Enter the actual hours");
-		Integer difficulty = getIntInput("Enter the project difficulty (1-5)");
-		String notes = getStringInput("Enter the project notes");
+		String projectName = getStringInput("Enter the project name");					// Asks user for project name (string)
+		BigDecimal estimatedHours = getDecimalInput("Enter the estimated hours");		// Asks user for hours (will store as two digit decimal
+		BigDecimal actualHours = getDecimalInput("Enter the actual hours");				// Asks user for hours (will store as two digit decimal
+		Integer difficulty = getIntInput("Enter the project difficulty (1-5)");			// Asks user for integer 1-5
+		String notes = getStringInput("Enter the project notes");						// Asks user for notes (string)
 
-		Project project = new Project();
+		Project project = new Project();												// Instantiates new project for details
 		
-		project.setProjectName(projectName);
+		project.setProjectName(projectName);											// Adds all user provided values to project for writing to table projects
 		project.setEstimatedHours(estimatedHours);
 		project.setActualHours(actualHours);
 		project.setDifficulty(difficulty);
 		project.setNotes(notes);
 		
-		Project dbProject = projectService.addProject(project);
-		System.out.println("You have successfully created project: " + dbProject);
+		Project dbProject = projectService.addProject(project);							// Sends project with all values to be written to table
+		System.out.println("You have successfully created project: " + dbProject);		// Feedback to user if writing to table was successful
 		
 	}
 
 	
+	// Will display each project ID and name in projects table
+	private void listProjects() {
+
+		List<Project> projects = projectService.fetchAllProjects();
+		
+		System.out.println("\nProjects:");
+		
+		projects.forEach(project -> System.out.println("   " + project.getProjectId() + ": " + project.getProjectName()));
+			
+		}
+	
+
+	// Asks user for an integer to select an existing project
+	private void selectProject() {
+		
+		listProjects();
+		
+		Integer projectId = getIntInput("Enter a projectID to select a project");
+		
+		curProject = null;
+		
+		curProject = projectService.fetchProjectByID(projectId);
+		
+		if(Objects.isNull(curProject)) {							// 4e on Assignment instructions, not present in code samples/solution in document
+			System.out.println("Invalid project ID selected.");
+		}
+		
+	}
+
+
+	public static void main(String[] args) {
+		new ProjectsApp().processUserSelections();
+	}
 	
 }
+
