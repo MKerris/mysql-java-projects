@@ -16,7 +16,9 @@ public class ProjectsApp {
 	private List<String> operations = List.of(						// List of options for the user
 			"1) Add a project",										// Add new project
 			"2) List projects",										// Displays all projects currently in table projects
-			"3) Select a project"									// Allows user to select existing project to access details of project
+			"3) Select a project",									// Allows user to select existing project to access details of project
+			"4) Update project details",							// Update an existing project's details
+			"5) Delete a project"									// Delete an existing project
 			);
 	// @formatter: on
 
@@ -44,8 +46,16 @@ public class ProjectsApp {
 						listProjects();
 						break;
 						
-					case 3:											// User enters 3 - Will allow a user to select an existing project using the project_id
+					case 3:											// User enters 3 - Will allow the user to select an existing project using the project_id
 						selectProject();
+						break;
+						
+					case 4:											// User enters 4 - Will allow the user to update an existing project's details
+						updateProjectDetails();
+						break;
+						
+					case 5:
+						deleteProject();							// User enters 5 - Will allow a user to delete an existing project and all associated details
 						break;
 						
 					default:										// User makes an invalid selection
@@ -58,7 +68,6 @@ public class ProjectsApp {
 		}
 		
 	}
-
 
 
 	// Displays menu and asks user to select an item from the menu or no selection to end
@@ -140,7 +149,7 @@ public class ProjectsApp {
 	}
 
 
-	// Asks user to provide details to populate a project and adds values to the project table
+	// Switch case 1 - Asks user to provide details to populate a project and adds values to the project table
 	private void createProject() {
 		
 		String projectName = getStringInput("Enter the project name");					// Asks user for project name (string)
@@ -163,7 +172,7 @@ public class ProjectsApp {
 	}
 
 	
-	// Will display each project ID and name in projects table
+	// Switch case 2 - Will display each project ID and name in projects table
 	private void listProjects() {
 
 		List<Project> projects = projectService.fetchAllProjects();
@@ -175,12 +184,12 @@ public class ProjectsApp {
 		}
 	
 
-	// Asks user for an integer to select an existing project
+	// Switch case 3 - Asks user for an integer to select an existing project
 	private void selectProject() {
 		
 		listProjects();
 		
-		Integer projectId = getIntInput("Enter a projectID to select a project");
+		Integer projectId = getIntInput("Enter a project ID to select a project");
 		
 		curProject = null;
 		
@@ -189,6 +198,54 @@ public class ProjectsApp {
 		if(Objects.isNull(curProject)) {							// 4e on Assignment instructions, not present in code samples/solution in document
 			System.out.println("Invalid project ID selected.");
 		}
+		
+	}
+
+	
+	// Switch case 4 - Displays current project values and asks user for new values to update existing project
+	private void updateProjectDetails() {
+
+		if(Objects.isNull(curProject)) {												// Check curProject and end if no project selected to modify
+			System.out.println("\nPlease select a project.");
+			return;
+		}
+			
+		String projName = getStringInput("Enter the project name [" + curProject.getProjectName() + "]");
+		BigDecimal projEstHours = getDecimalInput("Enter the estimated hours [" + curProject.getEstimatedHours() + "]");
+		BigDecimal projActHours = getDecimalInput("Enter the actual hours [" + curProject.getActualHours() + "]");
+		Integer projDifficulty = getIntInput("Enter the project difficulty (1-5) [" + curProject.getDifficulty() + "]");
+		String projNotes = getStringInput("Enter the project notes [" + curProject.getNotes() + "]");
+		
+		Project updatedProj = new Project();											// Stores updates entered by user
+		
+		// Check each input for null, replace with existing value if null
+		updatedProj.setProjectId(curProject.getProjectId());
+		updatedProj.setProjectName(Objects.isNull(projName) ? curProject.getProjectName() : projName);
+		updatedProj.setEstimatedHours(Objects.isNull(projEstHours) ? curProject.getEstimatedHours() : projEstHours);
+		updatedProj.setActualHours(Objects.isNull(projActHours) ? curProject.getActualHours() : projActHours);
+		updatedProj.setDifficulty(Objects.isNull(projDifficulty) ? curProject.getDifficulty() : projDifficulty);
+		updatedProj.setNotes(Objects.isNull(projNotes) ? curProject.getNotes() : projNotes);
+		
+		projectService.modifyProjectDetails(updatedProj);								// Send updated values/project to service layer to be updated
+		
+		curProject = projectService.fetchProjectByID(curProject.getProjectId());		// Fetch newly updated project values as they appear in the table after update
+		
+	}
+
+
+	// Switch case 5 - Deletes the currently selected project and all associated details
+	private void deleteProject() {
+		
+		listProjects();																	// List all available projects in table
+		
+		Integer projectId = getIntInput("Enter the ID of the project to delete");		// Ask user to select project to be deleted
+
+		projectService.deleteProject(projectId);										// Send selected project ID to be deleted
+
+		System.out.println("Project " + projectId + " has been deleted.");				// Confirm to user project has been deleted (will throw exception if delete fails)
+		
+		if(Objects.nonNull(curProject) && curProject.getProjectId().equals(projectId)) 	// Check to see if user's input matches currently selected project and set to null if true
+			curProject = null;
 		
 	}
 

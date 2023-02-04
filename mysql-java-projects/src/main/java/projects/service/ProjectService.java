@@ -3,6 +3,7 @@ package projects.service;
 import java.util.*;
 import projects.dao.ProjectDao;
 import projects.entity.Project;
+import projects.exception.DbException;
 
 public class ProjectService {
 
@@ -26,7 +27,28 @@ public class ProjectService {
 	// Used for switch case 3 - Allow user to select a specific project to work with
 	public Project fetchProjectByID(Integer projectId) {
 		
+		// Returns selected project details or throws exception of project not found
 		return projectDao.fetchProjectByID(projectId).orElseThrow( () -> new NoSuchElementException("Project with project ID = " + projectId + " does not exist."));
+		
+	}
+
+	
+	// Used for switch case 4 - Allow user to update existing project details
+	public void modifyProjectDetails(Project updatedProj) {
+		
+		// If update fails, throw exception. Success will return value
+		if(!projectDao.modifyProjectDetails(updatedProj))
+			throw new DbException("Project with ID " + updatedProj.getProjectId() + " does not exist.");
+		
+	}
+
+
+	// Used for switch case 5 - Allow user to delete a specified project 
+	public void deleteProject(Integer projectId) {
+		
+		// If delete fails, throw exception. Success will return value
+		if(!projectDao.deleteProject(projectId))
+			throw new DbException("Project with ID " + projectId + " does not exist.");
 		
 	}
 

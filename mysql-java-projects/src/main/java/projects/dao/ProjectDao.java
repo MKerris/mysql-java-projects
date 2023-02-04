@@ -20,7 +20,7 @@ public class ProjectDao extends DaoBase {
 	private static final String STEP_TABLE  = "step";
 	
 	
-	// Used for switch case 1 - Allow user to add a project to the database and collect details for new project
+	// Switch case 1 - Allow user to add a project to the database and collect details for new project
 	public Project insertProject(Project project) {
 	
 		// @formatter:off
@@ -64,7 +64,7 @@ public class ProjectDao extends DaoBase {
 	}
 
 
-	// Used for switch case 2 - List all projects in projects table
+	// Switch case 2 - List all projects in projects table
 	public List<Project> fetchAllProjects() {
 		
 		String sql = "SELECT * FROM " + PROJECT_TABLE + " ORDER BY project_name";
@@ -99,7 +99,7 @@ public class ProjectDao extends DaoBase {
 	}
 
 
-	// Used in switch case 3 - Allow user to select a specific project to work with
+	// Switch case 3 - Allow user to select a specific project to work with
 	public Optional<Project> fetchProjectByID(Integer projectId) {
 		
 		String sql = "SELECT * FROM " + PROJECT_TABLE + " WHERE project_id = ?";
@@ -143,7 +143,7 @@ public class ProjectDao extends DaoBase {
 	}
 
 
-	// Used in switch case 3 - Allow user to select a specific project to work with
+	// Switch case 3 - Allow user to select a specific project to work with and return related Categories
 	private List<Category> fetchCategoriesForProject(Connection conn, Integer projectId) throws SQLException {
 
 		// @formatter:off
@@ -170,7 +170,7 @@ public class ProjectDao extends DaoBase {
 	}
 
 
-	// Used in switch case 3 - Allow user to select a specific project to work with
+	// Switch case 3 - Allow user to select a specific project to work with and return related Steps
 	private List<Step> fetchStepsForProject(Connection conn, Integer projectId) throws SQLException {
 
 		String sql = "SELECT * FROM " + STEP_TABLE + " WHERE project_id = ?";
@@ -192,6 +192,7 @@ public class ProjectDao extends DaoBase {
 	}
 
 
+	// Switch case 3 - Allow user to select a specific project to work with and return related Materials
 	private List<Material> fetchMaterialsForProject(Connection conn, Integer projectId) throws SQLException {
 
 		String sql = "SELECT * FROM " + MATERIAL_TABLE + " WHERE project_id = ?";
@@ -210,6 +211,81 @@ public class ProjectDao extends DaoBase {
 
 			}
 		}
+	}
+
+
+	// Switch case 4 - Accepts updated project details and updates the database. Returns database success/fail.
+	public boolean modifyProjectDetails(Project updatedProj) {
+
+		// @formatter:off
+		String sql = ""
+				+ "UPDATE " + PROJECT_TABLE + " SET "
+				+ "project_name = ?, "
+				+ "estimated_hours = ?, "
+				+ "actual_hours = ?, "
+				+ "difficulty = ?, "
+				+ "notes = ? "
+				+ "WHERE project_id = ?";
+		// @formatter:on
+		
+		try(Connection conn = DbConnection.getConnection()) {				// Initiate connection with DB. If successful, try running SQL statement. If fail, throw exception
+			
+			startTransaction(conn);
+			
+			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+				
+				setParameter(stmt, 1, updatedProj.getProjectName(), String.class);
+				setParameter(stmt, 2, updatedProj.getEstimatedHours(), BigDecimal.class);
+				setParameter(stmt, 3, updatedProj.getActualHours(), BigDecimal.class);
+				setParameter(stmt, 4, updatedProj.getDifficulty(), Integer.class);
+				setParameter(stmt, 5, updatedProj.getNotes(), String.class);
+				setParameter(stmt, 6, updatedProj.getProjectId(), Integer.class);
+				
+				boolean updated = stmt.executeUpdate() == 1;				// If update to database succeeds, will return 1 (true)
+				commitTransaction(conn);
+				
+				return updated;												// Send update success (1/true) or fail (0/false) back to service layer
+				
+				
+			} catch(Exception e) {
+				rollbackTransaction(conn);									// If SQL statement fails, roll back transaction
+				throw new DbException(e);
+			}
+			
+		} catch(SQLException e) {
+			throw new DbException(e);
+		}
+	}
+
+
+	// Switch case 5 - Delete selected project from table
+	public boolean deleteProject(Integer projectId) {
+
+		String sql = "DELETE FROM " + PROJECT_TABLE + " WHERE project_id = ?";
+		
+		try(Connection conn = DbConnection.getConnection()) {				// Initiate connection with DB. If successful, try running SQL statement. If fail, throw exception
+			
+			startTransaction(conn);
+			
+			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+				
+				setParameter(stmt, 1, projectId, Integer.class);
+				
+				boolean updated = stmt.executeUpdate() == 1;				// If update to database succeeds, will return 1 (true)
+				commitTransaction(conn);
+				
+				return updated;												// Send update success (1/true) or fail (0/false) back to service layer
+				
+				
+			} catch(Exception e) {
+				rollbackTransaction(conn);									// If SQL statement fails, roll back transaction
+				throw new DbException(e);
+			}
+			
+		} catch(SQLException e) {
+			throw new DbException(e);
+		}
+		
 	}
 
 	
