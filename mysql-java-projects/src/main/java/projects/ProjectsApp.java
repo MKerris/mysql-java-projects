@@ -206,7 +206,7 @@ public class ProjectsApp {
 	private void updateProjectDetails() {
 
 		if(Objects.isNull(curProject)) {												// Check curProject and end if no project selected to modify
-			System.out.println("\nPlease select a project.");
+			System.out.println("\nPlease select a project (option 3) first.");
 			return;
 		}
 			
